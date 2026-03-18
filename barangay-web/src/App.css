@@ -14,6 +14,8 @@
   --bg:         #f1f5f9;
   --white:      #ffffff;
   --sidebar-w:  240px;
+  --sidebar-collapsed-w: 60px;
+  --topbar-h:   48px;
 }
 
 body {
@@ -37,7 +39,7 @@ a { text-decoration: none; color: inherit; }
   min-width: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────────── */
+/* ── Sidebar base ────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-w);
   background: var(--primary-dk);
@@ -48,6 +50,121 @@ a { text-decoration: none; color: inherit; }
   position: sticky;
   top: 0;
   height: 100vh;
+  transition: width 0.22s ease;
+  overflow: hidden;
+}
+
+/* collapsed state on desktop */
+.sidebar-collapsed .sidebar-desktop {
+  width: var(--sidebar-collapsed-w);
+}
+
+/* collapse toggle button */
+.sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+  transition: background 0.15s;
+}
+.sidebar-toggle:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* collapsed brand — just the logo */
+.sidebar-collapsed .sidebar-desktop .sidebar-brand {
+  justify-content: center;
+  padding: 14px 8px 10px;
+}
+
+/* collapsed nav items — icon only, centered */
+.nav-item-collapsed {
+  justify-content: center;
+  padding: 10px 0 !important;
+}
+.nav-item-collapsed.active {
+  border-left: 3px solid var(--accent);
+  padding-left: 0 !important;
+}
+
+/* collapsed footer */
+.sidebar-collapsed .sidebar-desktop .sidebar-footer {
+  justify-content: center;
+}
+
+/* ── Mobile sidebar (drawer) ─────────────────────────── */
+.sidebar-mobile {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* hamburger — hidden on desktop */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 20px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin-right: 4px;
+}
+.hamburger:hover { background: var(--primary-lt); }
+
+@media (max-width: 768px) {
+  /* hide desktop sidebar */
+  .sidebar-desktop { display: none; }
+
+  /* show hamburger */
+  .hamburger { display: flex; align-items: center; }
+
+  /* mobile drawer */
+  .sidebar-mobile {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-w);
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+  }
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+
+  /* dim overlay */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 299;
+  }
+
+  /* topbar adjustments */
+  .topbar-mun  { display: none; }
+  .topbar-sep  { display: none; }
+  .topbar-date { display: none; }
+
+  /* main content full width */
+  .main-content { padding: 16px 12px; }
 }
 
 .sidebar-brand {

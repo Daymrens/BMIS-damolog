@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, can } from './auth';
 import Dashboard from './pages/Dashboard';
 import Residents from './pages/Residents';
@@ -45,60 +46,102 @@ const nav = [
 function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // close mobile drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  // collapse sidebar on small screens by default
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => { if (e.matches) setCollapsed(false); };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   if (!user) return <Navigate to="/login" replace />;
 
   const handleLogout = () => { logout(); navigate('/login'); };
-
   const visibleNav = nav.filter(n => !n.perm || can(user.role, n.perm));
 
-  return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-seal">
-            <img src="/logo.png" alt="Barangay Damolog Seal" className="brand-logo" />
-          </div>
+  const sidebarContent = (
+    <>
+      <div className="sidebar-brand">
+        <div className="brand-seal">
+          <img src="/logo.png" alt="Barangay Damolog Seal" className="brand-logo" />
+        </div>
+        {!collapsed && (
           <div className="brand-text">
             <div className="brand-name">Barangay Damolog</div>
             <div className="brand-loc">Municipality of Sogod</div>
             <div className="brand-loc">Cebu</div>
           </div>
-        </div>
-        <div className="sidebar-divider" />
-        <nav className="sidebar-nav">
-          {visibleNav.map(n => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.to === '/'}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              <span className="nav-icon">{n.icon}</span>
-              <span>{n.label}</span>
-            </NavLink>
-          ))}
-          {can(user.role, 'view_admin') && (
-            <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-              <span className="nav-icon">⚙️</span>
-              <span>Admin</span>
-            </NavLink>
-          )}
-        </nav>
-        <div className="sidebar-footer">
+        )}
+      </div>
+      <div className="sidebar-divider" />
+      <nav className="sidebar-nav">
+        {visibleNav.map(n => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            end={n.to === '/'}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${collapsed ? 'nav-item-collapsed' : ''}`}
+            title={collapsed ? n.label : undefined}
+          >
+            <span className="nav-icon">{n.icon}</span>
+            {!collapsed && <span>{n.label}</span>}
+          </NavLink>
+        ))}
+        {can(user.role, 'view_admin') && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${collapsed ? 'nav-item-collapsed' : ''}`}
+            title={collapsed ? 'Admin' : undefined}
+          >
+            <span className="nav-icon">⚙️</span>
+            {!collapsed && <span>Admin</span>}
+          </NavLink>
+        )}
+      </nav>
+      <div className="sidebar-footer">
+        {!collapsed && (
           <div className="sidebar-user">
             <div className="sidebar-user-name">{user.fullName}</div>
             <div className="sidebar-user-role">
               <span className={`role-pill role-${user.role.toLowerCase()}`}>{user.role}</span>
             </div>
           </div>
-          <button className="logout-btn" onClick={handleLogout} title="Sign out">⏻</button>
-        </div>
+        )}
+        <button className="logout-btn" onClick={handleLogout} title="Sign out">⏻</button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className={`app-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Mobile overlay */}
+      {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
+
+      {/* Desktop sidebar */}
+      <aside className="sidebar sidebar-desktop">
+        <button className="sidebar-toggle" onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'}>
+          {collapsed ? '▶' : '◀'}
+        </button>
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile drawer */}
+      <aside className={`sidebar sidebar-mobile ${mobileOpen ? 'open' : ''}`}>
+        {sidebarContent}
       </aside>
 
       <div className="app-body">
         <header className="topbar">
           <div className="topbar-left">
+            {/* Mobile hamburger */}
+            <button className="hamburger" onClick={() => setMobileOpen(o => !o)} title="Menu">☰</button>
             <img src="/logo.png" alt="seal" className="topbar-logo" />
             <span className="topbar-brgy">Barangay Damolog</span>
             <span className="topbar-sep">·</span>
