@@ -1,0 +1,144 @@
+.admin-page { max-width: 1100px; }
+
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.admin-tab:hover { color: var(--primary); }
+.admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+.admin-section { display: flex; flex-direction: column; gap: 16px; }
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.admin-stat-card {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  text-align: center;
+}
+.admin-stat-val { font-size: 32px; font-weight: 800; }
+.admin-stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+.admin-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.admin-info-title { font-size: 14px; font-weight: 700; color: var(--primary-dk); margin-bottom: 12px; }
+.admin-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.admin-info-row:last-child { border-bottom: none; }
+.admin-info-row span:first-child { color: var(--muted); }
+.admin-info-row span:last-child  { font-weight: 600; }
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.role-admin { background: #ede9fe; color: #5b21b6; }
+.role-staff { background: #dbeafe; color: #1e40af; }
+
+.audit-action {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Role badge colors */
+.role-badge.role-admin     { background: #dbeafe; color: #1a56db; }
+.role-badge.role-secretary { background: #d1fae5; color: #059669; }
+.role-badge.role-treasurer { background: #fef3c7; color: #d97706; }
+.role-badge.role-staff     { background: #f3f4f6; color: #6b7280; }
+
+/* Sidebar role pill */
+.role-pill {
+  display: inline-block; border-radius: 10px; padding: 2px 8px;
+  font-size: 0.7rem; font-weight: 600;
+}
+.role-pill.role-admin     { background: #1a56db22; color: #1a56db; }
+.role-pill.role-secretary { background: #05996922; color: #059669; }
+.role-pill.role-treasurer { background: #d9770622; color: #d97706; }
+.role-pill.role-staff     { background: #6b728022; color: #6b7280; }
+
+/* Permissions matrix */
+.perm-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.perm-table th {
+  background: #f9fafb; padding: 10px 14px; text-align: center;
+  font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;
+}
+.perm-table th:first-child { text-align: left; }
+.perm-table td { padding: 8px 14px; border-bottom: 1px solid #f3f4f6; }
+.perm-table tr:last-child td { border-bottom: none; }
+.perm-table tr:hover td { background: #f9fafb; }
+.perm-name { text-transform: capitalize; color: #374151; font-weight: 500; }
+.perm-yes { color: #059669; font-weight: 700; font-size: 1rem; }
+.perm-no  { color: #d1d5db; }
+
+/* ── New admin additions ─────────────────────────────────────────────────── */
+
+.btn-sm { padding: 3px 10px !important; font-size: 12px !important; margin-right: 4px; }
+
+.toolbar-count { font-size: 12px; color: #64748b; align-self: center; }
+
+.off-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+}
+.off-captain { background: #fef3c7; color: #92400e; }
+.off-kagawad { background: #dbeafe; color: #1e40af; }
+
+.res-tag {
+  display: inline-block; padding: 1px 7px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; margin-right: 3px;
+}
+.tag-senior { background: #fef3c7; color: #92400e; }
+.tag-pwd    { background: #ede9fe; color: #5b21b6; }
+.tag-4ps    { background: #d1fae5; color: #065f46; }
+
+/* Sitio list */
+.sitio-list { display: flex; flex-direction: column; gap: 6px; }
+.sitio-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: #f9fafb; border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+.sitio-num  { width: 22px; height: 22px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.sitio-name { font-size: 14px; font-weight: 600; color: #111827; flex: 1; }
+.sitio-new-badge { background: #d1fae5; color: #065f46; font-size: 10px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+.sitio-msg  { margin-top: 10px; font-size: 13px; color: #059669; background: #d1fae5; padding: 8px 12px; border-radius: 8px; }
+
+/* Larger modal for resident edit */
+.modal-lg { max-width: 680px !important; width: 95vw !important; }
+
+/* badge-active / badge-inactive */
+.badge-active   { background: #d1fae5; color: #065f46; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.badge-inactive { background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }

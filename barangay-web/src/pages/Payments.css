@@ -1,0 +1,101 @@
+/* Summary grid */
+.pay-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.pay-card {
+  background: #fff;
+  border-radius: 10px;
+  border-top: 3px solid #e2e8f0;
+  padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.pay-card-val {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pay-card-lbl {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.pay-card-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.pay-card-breakdown {
+  padding: 12px 16px;
+}
+
+/* Category breakdown rows inside card */
+.pay-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pay-cat-row:last-child { border-bottom: none; }
+.pay-cat-name  { flex: 1; color: #374151; }
+.pay-cat-count { color: #9ca3af; font-size: 11px; }
+.pay-cat-total { font-weight: 700; color: #059669; min-width: 80px; text-align: right; }
+
+/* Category badge in table */
+.pay-cat-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+/* Amount preview in modal */
+.pay-amount-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #166534;
+}
+.pay-amount-big {
+  font-size: 20px;
+  font-weight: 800;
+  color: #059669;
+}
+
+/* Resident dropdown (shared with Queue) */
+.res-dropdown {
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 2px;
+}
+.res-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+.res-dropdown-item:last-child { border-bottom: none; }
+.res-dropdown-item:hover { background: #eff6ff; }

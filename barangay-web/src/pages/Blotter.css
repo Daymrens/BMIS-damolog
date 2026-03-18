@@ -1,0 +1,135 @@
+/* Stats bar */
+.blotter-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.blotter-stat-card {
+  flex: 1;
+  min-width: 90px;
+  background: #fff;
+  border-radius: 10px;
+  border-top: 3px solid #e2e8f0;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.blotter-stat-val { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.blotter-stat-lbl { font-size: 11px; color: #64748b; margin-top: 2px; white-space: nowrap; }
+
+/* Upcoming hearings strip */
+.hearing-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.hearing-strip-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e40af;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+.hearing-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.hearing-chip-case  { font-weight: 700; color: #1e40af; font-size: 11px; }
+.hearing-chip-date  { background: #1e40af; color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
+.hearing-chip-parties { color: #374151; font-size: 11px; }
+
+/* Type badge in table */
+.blotter-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* Detail modal */
+.blotter-detail-modal { max-width: 680px; }
+
+.blotter-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.blotter-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.blotter-party-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.blotter-party-respondent { background: #fff5f5; border-color: #fecaca; }
+.blotter-party-label { font-size: 9px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.blotter-party-name  { font-size: 14px; font-weight: 700; color: #1e293b; }
+.blotter-party-sub   { font-size: 11px; color: #64748b; margin-top: 3px; }
+.blotter-vs { font-size: 18px; font-weight: 900; color: #dc2626; text-align: center; }
+
+.blotter-detail-section {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.blotter-detail-row {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+.blotter-detail-row:last-child { border-bottom: none; }
+.blotter-detail-full { flex-direction: column; gap: 4px; }
+.blotter-detail-key {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  min-width: 140px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding-top: 1px;
+}
+
+/* Form modal */
+.blotter-form-modal { max-width: 700px; }
+.blotter-form-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1a4f8a;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}

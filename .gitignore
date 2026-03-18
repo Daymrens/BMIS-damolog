@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+appsettings.Development.json
+
+# SQLite (don't commit local DB — Railway uses the one baked into Docker)
+# Comment out the line below if you WANT to include the seed DB in the image
+# barangay.db
+
+# Node / Vite
+barangay-web/node_modules/
+barangay-web/dist/
+barangay-web/.env
+barangay-web/.env.local
+barangay-web/.env.production
+
+# Misc
+.DS_Store
+Thumbs.db
