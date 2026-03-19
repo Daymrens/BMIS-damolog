@@ -10,4 +10,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="seed_residents.sql" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="seed_budget.sql" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
