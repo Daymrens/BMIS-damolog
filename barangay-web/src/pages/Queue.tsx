@@ -120,7 +120,10 @@ export default function Queue() {
         issuedBy: releaseIssuedBy,
       });
       // Save doc ID to queue — but keep status as Processing until payment collected
-      await patch(`/api/queue/${releaseModal.id}/document`, { documentId: issued.id });
+      // Non-fatal: if this fails (e.g. column not yet on DB), we still proceed
+      try {
+        await patch(`/api/queue/${releaseModal.id}/document`, { documentId: issued.id });
+      } catch { /* column may not exist yet on older DB — proceed anyway */ }
       load();
       setReleaseDoc(issued);
       // Print — use linked resident if available, otherwise build a minimal resident object from queue data
@@ -144,7 +147,7 @@ export default function Queue() {
         return;
       }
       setReleaseStep('payment');
-    } catch { alert('Failed to issue document.'); }
+    } catch (err) { alert('Failed to issue document: ' + (err instanceof Error ? err.message : String(err))); }
   };
 
   const doCollectPayment = async () => {
