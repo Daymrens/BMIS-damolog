@@ -146,7 +146,12 @@ export default function Payments() {
     if (!form.collectedBy.trim()) { alert('Select who collected the payment.'); return; }
     if (form.amount <= 0)         { alert('Amount must be greater than zero.'); return; }
     const created = await post<Payment>('/api/payments', form);
+    // If this payment came from a queue lookup, mark that queue as Released
+    if (queueLookup && (queueLookup.status === 'Processing' || queueLookup.status === 'Released')) {
+      try { await patch(`/api/queue/${queueLookup.id}/status`, { status: 'Released' }); } catch { /* non-fatal */ }
+    }
     setModal(false);
+    setQueueInput(''); setQueueLookup(null); setQueueError('');
     setForm({ ...emptyForm, collectedBy: form.collectedBy });
     load();
     printOR(created);
