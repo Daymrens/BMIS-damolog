@@ -131,6 +131,7 @@ export default function Queue() {
         id: 0, firstName: releaseModal.requesterName, middleName: '', lastName: '',
         address: '', sitio: '', birthDate: '', contactNumber: '',
         isVoter: false, isSenior: false, isPWD: false, is4Ps: false,
+        gender: '', civilStatus: '', householdNo: '', occupation: '', email: '',
       };
       printCertificate(
         { residentId: releaseModal.residentId ?? 0, documentType: releaseModal.documentType,
@@ -399,7 +400,7 @@ export default function Queue() {
                   <span style={{ color: '#6b7280' }}>Date</span><span>{new Date(detailPayment.paidAt).toLocaleString('en-PH')}</span>
                 </div>
                 <button className="btn-secondary" style={{ marginTop: 12, fontSize: 12, padding: '4px 12px' }}
-                  onClick={() => printOR(detailPayment)}>
+                  onClick={() => printOR({ ...detailPayment, payerName: detailModal.requesterName, description: detailModal.documentType })}>
                   🖨 Reprint OR
                 </button>
               </div>
@@ -518,6 +519,7 @@ export default function Queue() {
                             id: 0, firstName: releaseModal.requesterName, middleName: '', lastName: '',
                             address: '', sitio: '', birthDate: '', contactNumber: '',
                             isVoter: false, isSenior: false, isPWD: false, is4Ps: false,
+                            gender: '', civilStatus: '', householdNo: '', occupation: '', email: '',
                           };
                           printCertificate(
                             { residentId: releaseModal.residentId ?? 0, documentType: releaseModal.documentType,
