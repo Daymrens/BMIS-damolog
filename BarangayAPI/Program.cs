@@ -17,6 +17,12 @@ builder.Services.AddCors(opt =>
 
 var app = builder.Build();
 
+// Ensure /data directory exists (Railway Volume mount point)
+var dbPath = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=barangay.db";
+var dataDir = Path.GetDirectoryName(dbPath.Replace("Data Source=", "").Trim());
+if (!string.IsNullOrWhiteSpace(dataDir) && !Directory.Exists(dataDir))
+    Directory.CreateDirectory(dataDir);
+
 // Auto-migrate on startup + seed default admin
 using (var scope = app.Services.CreateScope())
 {

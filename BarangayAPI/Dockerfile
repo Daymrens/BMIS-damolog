@@ -9,8 +9,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Copy the existing SQLite database so data persists across builds
-COPY barangay.db .
+# /data is the Railway Volume mount point — DB lives there, not in the container image
+RUN mkdir -p /data
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production

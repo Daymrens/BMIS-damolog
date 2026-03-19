@@ -1,4 +1,4 @@
-<div align="center">
+contiun<div align="center">
 
 # 🏛️ Barangay Management Information System
 ### BMIS — Barangay Damolog, Municipality of Sogod, Cebu
