@@ -47,6 +47,9 @@ using (var scope = app.Services.CreateScope())
         "ALTER TABLE Blotters ADD COLUMN Resolution TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE Blotters ADD COLUMN ResolvedDate TEXT NULL",
         // QueueRequests table (EnsureCreated handles new tables, but belt-and-suspenders)
+        // QueueRequests — new columns for doc-before-payment flow
+        "ALTER TABLE QueueRequests ADD COLUMN IssuedDocumentId INTEGER NULL",
+        // Documents — make ResidentId nullable (SQLite ignores NOT NULL on existing cols, this is a no-op but safe)
         @"CREATE TABLE IF NOT EXISTS QueueRequests (
             Id INTEGER PRIMARY KEY AUTOINCREMENT,
             QueueNumber TEXT NOT NULL DEFAULT '',
@@ -60,7 +63,8 @@ using (var scope = app.Services.CreateScope())
             Notes TEXT NOT NULL DEFAULT '',
             RequestedAt TEXT NOT NULL DEFAULT '',
             ProcessedAt TEXT NULL,
-            ReleasedAt TEXT NULL
+            ReleasedAt TEXT NULL,
+            IssuedDocumentId INTEGER NULL
         )",
         @"CREATE TABLE IF NOT EXISTS Payments (
             Id INTEGER PRIMARY KEY AUTOINCREMENT,

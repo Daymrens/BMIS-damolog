@@ -123,14 +123,18 @@ export default function Queue() {
       await patch(`/api/queue/${releaseModal.id}/document`, { documentId: issued.id });
       load();
       setReleaseDoc(issued);
-      if (issued && releaseModal.resident) {
-        printCertificate(
-          { residentId: releaseModal.residentId!, documentType: releaseModal.documentType,
-            purpose: releasePurpose, issuedBy: releaseIssuedBy,
-            controlNumber: issued.controlNumber, issuedAt: issued.issuedAt },
-          releaseModal.resident
-        );
-      }
+      // Print — use linked resident if available, otherwise build a minimal resident object from queue data
+      const residentForPrint = releaseModal.resident ?? {
+        id: 0, firstName: releaseModal.requesterName, middleName: '', lastName: '',
+        address: '', sitio: '', birthDate: '', contactNumber: '',
+        isVoter: false, isSenior: false, isPWD: false, is4Ps: false,
+      };
+      printCertificate(
+        { residentId: releaseModal.residentId ?? 0, documentType: releaseModal.documentType,
+          purpose: releasePurpose, issuedBy: releaseIssuedBy,
+          controlNumber: issued.controlNumber, issuedAt: issued.issuedAt },
+        residentForPrint
+      );
       const fee = FEE_SCHEDULE[releaseModal.documentType];
       if (fee === 0) {
         // Free doc — mark Released immediately, no payment needed
@@ -506,13 +510,19 @@ export default function Queue() {
                     📄 Document already issued — payment modal was closed before collecting.
                     <button className="btn-secondary" style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px' }}
                       onClick={() => {
-                        if (releaseDoc && releaseModal.resident)
+                        if (releaseDoc) {
+                          const residentForPrint = releaseModal.resident ?? {
+                            id: 0, firstName: releaseModal.requesterName, middleName: '', lastName: '',
+                            address: '', sitio: '', birthDate: '', contactNumber: '',
+                            isVoter: false, isSenior: false, isPWD: false, is4Ps: false,
+                          };
                           printCertificate(
-                            { residentId: releaseModal.residentId!, documentType: releaseModal.documentType,
+                            { residentId: releaseModal.residentId ?? 0, documentType: releaseModal.documentType,
                               purpose: releasePurpose, issuedBy: releaseIssuedBy,
                               controlNumber: releaseDoc.controlNumber, issuedAt: releaseDoc.issuedAt },
-                            releaseModal.resident
+                            residentForPrint
                           );
+                        }
                       }}>
                       🖨 Reprint PDF
                     </button>
