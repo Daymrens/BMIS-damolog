@@ -1564,18 +1564,29 @@ app.MapDelete("/api/bhw/medicines/{id}", async (AppDbContext db, int id) =>
 // TEMP: one-time seed endpoint — POST /api/seed-residents, then remove
 app.MapPost("/api/seed-residents", async (AppDbContext db) =>
 {
-    if (await db.Residents.AnyAsync())
-        return Results.Ok(new { message = "Already seeded", count = await db.Residents.CountAsync() });
-    var sqlPath = Path.Combine(AppContext.BaseDirectory, "seed_residents.sql");
-    if (!File.Exists(sqlPath)) return Results.NotFound(new { message = $"Seed file not found at {sqlPath}" });
-    var sql = await File.ReadAllTextAsync(sqlPath);
-    var conn = db.Database.GetDbConnection();
-    await conn.OpenAsync();
-    using var cmd = conn.CreateCommand();
-    cmd.CommandText = sql;
-    await cmd.ExecuteNonQueryAsync();
-    await conn.CloseAsync();
-    return Results.Ok(new { message = "Seeded", count = await db.Residents.CountAsync() });
+    try {
+        if (await db.Residents.AnyAsync())
+            return Results.Ok(new { message = "Already seeded", count = await db.Residents.CountAsync() });
+        var sqlPath = Path.Combine(AppContext.BaseDirectory, "seed_residents.sql");
+        if (!File.Exists(sqlPath)) return Results.NotFound(new { message = $"Seed file not found at {sqlPath}" });
+        var lines = await File.ReadAllLinesAsync(sqlPath);
+        // Strip comment lines and blank lines, then split on semicolons
+        var cleaned = string.Join("\n", lines.Where(l => !l.TrimStart().StartsWith("--") && l.Trim() != ""));
+        var statements = cleaned.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        int affected = 0;
+        foreach (var stmt in statements) {
+            if (string.IsNullOrWhiteSpace(stmt)) continue;
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = stmt;
+            affected += await cmd.ExecuteNonQueryAsync();
+        }
+        await conn.CloseAsync();
+        return Results.Ok(new { message = "Seeded", affected, count = await db.Residents.CountAsync() });
+    } catch (Exception ex) {
+        return Results.Problem(ex.Message);
+    }
 });
 app.Run();
 
