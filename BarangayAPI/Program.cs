@@ -1561,12 +1561,6 @@ app.MapDelete("/api/bhw/medicines/{id}", async (AppDbContext db, int id) =>
 
 
 
-// TEMP: one-time seed endpoint — POST /api/seed-residents, then remove
-app.MapPost("/api/seed-residents", async (AppDbContext db) =>
-{
-    try {
-        if (await db.Residents.AnyAsync())
-            return Results.Ok(new { message = "Already seeded", count = await db.Residents.CountAsync() });
         var sqlPath = Path.Combine(AppContext.BaseDirectory, "seed_residents.sql");
         if (!File.Exists(sqlPath)) return Results.NotFound(new { message = $"Seed file not found at {sqlPath}" });
         var lines = await File.ReadAllLinesAsync(sqlPath);
