@@ -13,6 +13,7 @@
   <ItemGroup>
     <Content Include="seed_residents.sql" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="seed_budget.sql" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="seed_officials.sql" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

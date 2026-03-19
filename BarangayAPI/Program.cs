@@ -1582,6 +1582,30 @@ app.MapDelete("/api/bhw/medicines/{id}", async (AppDbContext db, int id) =>
         return Results.Problem(ex.Message);
     }
 });
+
+// TEMP: one-time officials seed — POST /api/seed-officials, remove after use
+app.MapPost("/api/seed-officials", async (AppDbContext db) =>
+{
+    try {
+        if (await db.Officials.AnyAsync())
+            return Results.Ok(new { message = "Already seeded", count = await db.Officials.CountAsync() });
+        var sqlPath = Path.Combine(AppContext.BaseDirectory, "seed_officials.sql");
+        if (!File.Exists(sqlPath)) return Results.NotFound(new { message = $"Not found: {sqlPath}" });
+        var lines = await File.ReadAllLinesAsync(sqlPath);
+        var cleaned = string.Join("\n", lines.Where(l => !l.TrimStart().StartsWith("--") && l.Trim() != ""));
+        var statements = cleaned.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var conn = db.Database.GetDbConnection();
+        await conn.OpenAsync();
+        foreach (var stmt in statements) {
+            if (string.IsNullOrWhiteSpace(stmt)) continue;
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = stmt;
+            await cmd.ExecuteNonQueryAsync();
+        }
+        await conn.CloseAsync();
+        return Results.Ok(new { message = "Seeded", count = await db.Officials.CountAsync() });
+    } catch (Exception ex) { return Results.Problem(ex.Message); }
+});
 app.Run();
 
 record TaskStatusPatch(string Status, string? CompletionNotes);
