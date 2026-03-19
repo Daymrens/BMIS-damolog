@@ -81,9 +81,14 @@ export default function Payments() {
     try {
       const q = await get<QueueRequest>(`/api/queue/lookup?q=${encodeURIComponent(num)}`);
 
-      // Validation: must be Released
-      if (q.status === 'Pending' || q.status === 'Processing') {
-        setQueueError(`Queue ${num} is still ${q.status} — document hasn't been released yet.`);
+      // Validation: must be Released OR Processing-with-doc-issued (payment modal was closed)
+      if (q.status === 'Pending') {
+        setQueueError(`Queue ${num} is still Pending — document hasn't been processed yet.`);
+        setQueueLoading(false);
+        return;
+      }
+      if (q.status === 'Processing' && !q.issuedDocumentId) {
+        setQueueError(`Queue ${num} is still Processing — document hasn't been issued yet.`);
         setQueueLoading(false);
         return;
       }

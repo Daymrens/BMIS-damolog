@@ -155,6 +155,8 @@ export interface QueueRequest {
   requestedAt: string;
   processedAt?: string;
   releasedAt?: string;
+  issuedDocumentId?: number;
+  issuedDocument?: Document;
 }
 
 export interface Stats {

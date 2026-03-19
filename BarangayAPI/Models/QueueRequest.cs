@@ -16,4 +16,6 @@ public class QueueRequest
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ProcessedAt { get; set; }
     public DateTime? ReleasedAt { get; set; }
+    public int? IssuedDocumentId { get; set; }                // set after doc is issued, before payment
+    public Document? IssuedDocument { get; set; }
 }

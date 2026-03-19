@@ -88,12 +88,21 @@ export default function Queue() {
     const next = q.status === 'Pending' ? 'Processing' : q.status === 'Processing' ? 'Released' : null;
     if (!next) return;
     if (next === 'Released') {
-      setReleaseModal(q);
-      setReleasePurpose(q.purpose || '');
       setReleaseIssuedBy(officials[0]?.name ?? '');
       setPayCollectedBy(officials[0]?.name ?? '');
-      setReleaseStep('doc');
-      setReleaseDoc(null);
+      setPayMethod('Cash');
+
+      if (q.issuedDocumentId && q.issuedDocument) {
+        // Doc already issued — payment modal was closed accidentally, skip to payment step
+        setReleasePurpose(q.issuedDocument.purpose || q.purpose || '');
+        setReleaseDoc(q.issuedDocument);
+        setReleaseStep('payment');
+      } else {
+        setReleasePurpose(q.purpose || '');
+        setReleaseDoc(null);
+        setReleaseStep('doc');
+      }
+      setReleaseModal(q);
       return;
     }
     await patch(`/api/queue/${q.id}/status`, { status: next });
@@ -110,7 +119,8 @@ export default function Queue() {
         purpose: releasePurpose,
         issuedBy: releaseIssuedBy,
       });
-      await patch(`/api/queue/${releaseModal.id}/status`, { status: 'Released' });
+      // Save doc ID to queue — but keep status as Processing until payment collected
+      await patch(`/api/queue/${releaseModal.id}/document`, { documentId: issued.id });
       load();
       setReleaseDoc(issued);
       if (issued && releaseModal.resident) {
@@ -122,7 +132,13 @@ export default function Queue() {
         );
       }
       const fee = FEE_SCHEDULE[releaseModal.documentType];
-      if (fee === 0) { setReleaseModal(null); return; }
+      if (fee === 0) {
+        // Free doc — mark Released immediately, no payment needed
+        await patch(`/api/queue/${releaseModal.id}/status`, { status: 'Released' });
+        load();
+        setReleaseModal(null);
+        return;
+      }
       setReleaseStep('payment');
     } catch { alert('Failed to issue document.'); }
   };
@@ -140,6 +156,9 @@ export default function Queue() {
       paymentMethod: payMethod,
       collectedBy: payCollectedBy,
     });
+    // Only mark Released after payment is collected
+    await patch(`/api/queue/${releaseModal.id}/status`, { status: 'Released' });
+    load();
     setReleaseModal(null);
     printOR(created);
   };
@@ -482,6 +501,23 @@ export default function Queue() {
                     ₱{(FEE_SCHEDULE[releaseModal.documentType] ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
+                {releaseModal.issuedDocumentId && (
+                  <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#92400e', marginBottom: 12 }}>
+                    📄 Document already issued — payment modal was closed before collecting.
+                    <button className="btn-secondary" style={{ marginLeft: 10, fontSize: 11, padding: '2px 10px' }}
+                      onClick={() => {
+                        if (releaseDoc && releaseModal.resident)
+                          printCertificate(
+                            { residentId: releaseModal.residentId!, documentType: releaseModal.documentType,
+                              purpose: releasePurpose, issuedBy: releaseIssuedBy,
+                              controlNumber: releaseDoc.controlNumber, issuedAt: releaseDoc.issuedAt },
+                            releaseModal.resident
+                          );
+                      }}>
+                      🖨 Reprint PDF
+                    </button>
+                  </div>
+                )}
                 <div className="form-grid">
                   <div className="form-group full">
                     <label>Payment Method</label>
@@ -497,7 +533,7 @@ export default function Queue() {
                   </div>
                 </div>
                 <div className="modal-actions">
-                  <button className="btn-secondary" onClick={() => setReleaseModal(null)}>Skip Payment</button>
+                  <button className="btn-secondary" onClick={() => setReleaseModal(null)}>Close</button>
                   <button className="btn-primary" onClick={doCollectPayment}>💰 Collect & Print OR</button>
                 </div>
               </>

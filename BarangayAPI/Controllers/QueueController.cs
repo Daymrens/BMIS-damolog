@@ -16,7 +16,7 @@ public class QueueController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? date, [FromQuery] string? status)
     {
-        var query = _db.QueueRequests.Include(q => q.Resident).AsQueryable();
+        var query = _db.QueueRequests.Include(q => q.Resident).Include(q => q.IssuedDocument).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(date) && DateOnly.TryParse(date, out var d))
             query = query.Where(q => q.RequestedAt.Date == d.ToDateTime(TimeOnly.MinValue).Date);
@@ -34,6 +34,7 @@ public class QueueController : ControllerBase
         var today = DateTime.UtcNow.Date;
         var list = await _db.QueueRequests
             .Include(q => q.Resident)
+            .Include(q => q.IssuedDocument)
             .Where(q => q.RequestedAt.Date == today)
             .OrderBy(q => q.RequestedAt)
             .ToListAsync();
@@ -54,35 +55,30 @@ public class QueueController : ControllerBase
         });
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> Get(int id)
-    {
-        var q = await _db.QueueRequests.Include(q => q.Resident).FirstOrDefaultAsync(q => q.Id == id);
-        return q is null ? NotFound() : Ok(q);
-    }
-
-    // GET /api/queue/by-number/Q-0319-001
-    [HttpGet("by-number/{queueNumber}")]
-    public async Task<IActionResult> GetByNumber(string queueNumber)
-    {
-        var q = await _db.QueueRequests.Include(q => q.Resident)
-            .FirstOrDefaultAsync(q => q.QueueNumber == queueNumber);
-        return q is null ? NotFound(new { message = $"Queue number '{queueNumber}' not found." }) : Ok(q);
-    }
-
-    // GET /api/queue/lookup?q=Q-0319-001  (safe alternative avoiding route conflicts)
+    // GET /api/queue/lookup?q=Q-0319-001
     [HttpGet("lookup")]
     public async Task<IActionResult> Lookup([FromQuery] string q)
     {
-        var req = await _db.QueueRequests.Include(x => x.Resident)
+        var req = await _db.QueueRequests
+            .Include(x => x.Resident)
+            .Include(x => x.IssuedDocument)
             .FirstOrDefaultAsync(x => x.QueueNumber == q);
         return req is null ? NotFound(new { message = $"Queue number '{q}' not found." }) : Ok(req);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var q = await _db.QueueRequests
+            .Include(q => q.Resident)
+            .Include(q => q.IssuedDocument)
+            .FirstOrDefaultAsync(q => q.Id == id);
+        return q is null ? NotFound() : Ok(q);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(QueueRequest req)
     {
-        // Generate queue number: Q-{date}-{seq}
         var today = DateTime.UtcNow.Date;
         var todayCount = await _db.QueueRequests.CountAsync(q => q.RequestedAt.Date == today);
         req.QueueNumber = $"Q-{DateTime.UtcNow:MMdd}-{(todayCount + 1):D3}";
@@ -94,7 +90,7 @@ public class QueueController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = req.Id }, req);
     }
 
-    // PATCH /api/queue/{id}/status  body: { "status": "Processing" }
+    // PATCH /api/queue/{id}/status
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] StatusUpdate body)
     {
@@ -106,6 +102,17 @@ public class QueueController : ControllerBase
         if (body.Status == "Released")   req.ReleasedAt  = DateTime.UtcNow;
         if (!string.IsNullOrWhiteSpace(body.Notes)) req.Notes = body.Notes;
 
+        await _db.SaveChangesAsync();
+        return Ok(req);
+    }
+
+    // PATCH /api/queue/{id}/document — saves issuedDocumentId after doc printed, before payment collected
+    [HttpPatch("{id}/document")]
+    public async Task<IActionResult> SetDocument(int id, [FromBody] SetDocumentBody body)
+    {
+        var req = await _db.QueueRequests.FindAsync(id);
+        if (req is null) return NotFound();
+        req.IssuedDocumentId = body.DocumentId;
         await _db.SaveChangesAsync();
         return Ok(req);
     }
@@ -122,3 +129,4 @@ public class QueueController : ControllerBase
 }
 
 public record StatusUpdate(string Status, string? Notes);
+public record SetDocumentBody(int DocumentId);
