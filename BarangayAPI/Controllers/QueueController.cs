@@ -54,11 +54,29 @@ public class QueueController : ControllerBase
         });
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
     {
         var q = await _db.QueueRequests.Include(q => q.Resident).FirstOrDefaultAsync(q => q.Id == id);
         return q is null ? NotFound() : Ok(q);
+    }
+
+    // GET /api/queue/by-number/Q-0319-001
+    [HttpGet("by-number/{queueNumber}")]
+    public async Task<IActionResult> GetByNumber(string queueNumber)
+    {
+        var q = await _db.QueueRequests.Include(q => q.Resident)
+            .FirstOrDefaultAsync(q => q.QueueNumber == queueNumber);
+        return q is null ? NotFound(new { message = $"Queue number '{queueNumber}' not found." }) : Ok(q);
+    }
+
+    // GET /api/queue/lookup?q=Q-0319-001  (safe alternative avoiding route conflicts)
+    [HttpGet("lookup")]
+    public async Task<IActionResult> Lookup([FromQuery] string q)
+    {
+        var req = await _db.QueueRequests.Include(x => x.Resident)
+            .FirstOrDefaultAsync(x => x.QueueNumber == q);
+        return req is null ? NotFound(new { message = $"Queue number '{q}' not found." }) : Ok(req);
     }
 
     [HttpPost]

@@ -52,6 +52,10 @@ export default function Queue() {
   const [payMethod, setPayMethod]           = useState<'Cash' | 'GCash' | 'Maya'>('Cash');
   const [payCollectedBy, setPayCollectedBy] = useState('');
 
+  // Released card detail: check payment status
+  const [detailModal, setDetailModal]       = useState<QueueRequest | null>(null);
+  const [detailPayment, setDetailPayment]   = useState<{ orNumber: string; amount: number; paymentMethod: string; collectedBy: string; paidAt: string; status: string } | null | 'loading'>('loading');
+
   const load = () => {
     const qs = statusFilter ? `?status=${statusFilter}` : '';
     get<QueueRequest[]>(`/api/queue/today${qs}`).then(setQueue).catch(console.error);
@@ -140,6 +144,24 @@ export default function Queue() {
     printOR(created);
   };
 
+  const openDetail = async (q: QueueRequest) => {
+    setDetailModal(q);
+    setDetailPayment('loading');
+    try {
+      const qs = new URLSearchParams({ description: q.documentType });
+      if (q.residentId) qs.set('residentId', String(q.residentId));
+      const results = await get<Array<{ orNumber: string; amount: number; paymentMethod: string; collectedBy: string; paidAt: string; status: string }>>(`/api/payments?${qs}`);
+      // Find the most recent non-voided payment matching this request (same day)
+      const releaseDay = q.releasedAt ? new Date(q.releasedAt).toDateString() : new Date(q.requestedAt).toDateString();
+      const match = results.find(p => p.status === 'Paid' && new Date(p.paidAt).toDateString() === releaseDay)
+        ?? results.find(p => p.status === 'Paid')
+        ?? null;
+      setDetailPayment(match);
+    } catch {
+      setDetailPayment(null);
+    }
+  };
+
   const cancel = async (q: QueueRequest) => {
     if (!confirm(`Cancel queue ${q.queueNumber}?`)) return;
     await patch(`/api/queue/${q.id}/status`, { status: 'Cancelled' });
@@ -216,7 +238,9 @@ export default function Queue() {
               </div>
               <div className="queue-col-body">
                 {col.items.map(q => (
-                  <div key={q.id} className="queue-card">
+                  <div key={q.id} className="queue-card"
+                    onClick={q.status === 'Released' ? () => openDetail(q) : undefined}
+                    style={q.status === 'Released' ? { cursor: 'pointer', borderLeft: '3px solid #059669' } : undefined}>
                     <div className="queue-card-top">
                       <span className="queue-number">{q.queueNumber}</span>
                       <span className="queue-type-badge" style={{ background: q.requestType === 'Online' ? '#ede9fe' : '#f0fdf4', color: q.requestType === 'Online' ? '#5b21b6' : '#166534' }}>
@@ -315,6 +339,98 @@ export default function Queue() {
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setModal(false)}>Cancel</button>
               <button className="btn-primary" onClick={submit}>🎫 Add to Queue</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Released Card Detail Modal */}
+      {detailModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setDetailModal(null)}>
+          <div className="modal" style={{ maxWidth: 460 }}>
+            <h2>🧾 {detailModal.queueNumber} — Details</h2>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13 }}>
+              <div style={{ fontWeight: 700 }}>{detailModal.documentType}</div>
+              <div style={{ color: '#6b7280' }}>{detailModal.requesterName}</div>
+              {detailModal.purpose && <div style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>Purpose: {detailModal.purpose}</div>}
+            </div>
+
+            {detailPayment === 'loading' && (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: '#6b7280' }}>Checking payment status…</div>
+            )}
+
+            {detailPayment !== 'loading' && detailPayment !== null && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 18 }}>✅</span>
+                  <span style={{ fontWeight: 700, color: '#065f46' }}>Payment Collected</span>
+                </div>
+                <div style={{ fontSize: 13, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', color: '#374151' }}>
+                  <span style={{ color: '#6b7280' }}>OR Number</span><span><code style={{ fontSize: 11 }}>{detailPayment.orNumber}</code></span>
+                  <span style={{ color: '#6b7280' }}>Amount</span><span style={{ fontWeight: 700, color: '#059669' }}>₱{Number(detailPayment.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  <span style={{ color: '#6b7280' }}>Method</span><span>{detailPayment.paymentMethod}</span>
+                  <span style={{ color: '#6b7280' }}>Collected By</span><span>{detailPayment.collectedBy}</span>
+                  <span style={{ color: '#6b7280' }}>Date</span><span>{new Date(detailPayment.paidAt).toLocaleString('en-PH')}</span>
+                </div>
+                <button className="btn-secondary" style={{ marginTop: 12, fontSize: 12, padding: '4px 12px' }}
+                  onClick={() => printOR(detailPayment)}>
+                  🖨 Reprint OR
+                </button>
+              </div>
+            )}
+
+            {detailPayment !== 'loading' && detailPayment === null && (
+              <>
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18 }}>⚠️</span>
+                    <span style={{ fontWeight: 700, color: '#991b1b' }}>No Payment Found</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>
+                    {(FEE_SCHEDULE[detailModal.documentType] ?? 0) === 0
+                      ? 'This document is free of charge — no payment required.'
+                      : 'Payment has not been collected yet for this request.'}
+                  </div>
+                </div>
+                {(FEE_SCHEDULE[detailModal.documentType] ?? 0) > 0 && (
+                  <div className="form-grid">
+                    <div className="form-group full">
+                      <label>Payment Method</label>
+                      <select value={payMethod} onChange={e => setPayMethod(e.target.value as 'Cash' | 'GCash' | 'Maya')}>
+                        {['Cash', 'GCash', 'Maya'].map(m => <option key={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group full">
+                      <label>Collected By</label>
+                      <select value={payCollectedBy} onChange={e => setPayCollectedBy(e.target.value)}>
+                        {officials.map(o => <option key={o.id} value={o.name}>{o.name} — {o.position}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setDetailModal(null)}>Close</button>
+              {detailPayment !== 'loading' && detailPayment === null && (FEE_SCHEDULE[detailModal.documentType] ?? 0) > 0 && (
+                <button className="btn-primary" onClick={async () => {
+                  const fee = FEE_SCHEDULE[detailModal.documentType];
+                  const created = await post<{ orNumber: string; paidAt: string; amount: number; payerName: string; description: string; paymentMethod: string; collectedBy: string; status: string; id: number }>('/api/payments', {
+                    payerName: detailModal.requesterName,
+                    residentId: detailModal.residentId,
+                    category: 'Clearance Fee',
+                    description: detailModal.documentType,
+                    amount: fee,
+                    paymentMethod: payMethod,
+                    collectedBy: payCollectedBy,
+                  });
+                  setDetailModal(null);
+                  printOR(created);
+                }}>
+                  💰 Collect ₱{FEE_SCHEDULE[detailModal.documentType]} & Print OR
+                </button>
+              )}
             </div>
           </div>
         </div>

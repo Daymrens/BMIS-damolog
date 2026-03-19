@@ -12,9 +12,10 @@ public class PaymentsController : ControllerBase
     private readonly AppDbContext _db;
     public PaymentsController(AppDbContext db) => _db = db;
 
-    // GET /api/payments?date=2025-03-17&category=Clearance Fee
+    // GET /api/payments?date=2025-03-17&category=Clearance Fee&residentId=5&description=Barangay Clearance
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? date, [FromQuery] string? category)
+    public async Task<IActionResult> GetAll([FromQuery] string? date, [FromQuery] string? category,
+        [FromQuery] int? residentId, [FromQuery] string? description)
     {
         var query = _db.Payments.Include(p => p.Resident).Include(p => p.Document).AsQueryable();
 
@@ -23,6 +24,12 @@ public class PaymentsController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(category))
             query = query.Where(p => p.Category == category);
+
+        if (residentId.HasValue)
+            query = query.Where(p => p.ResidentId == residentId.Value);
+
+        if (!string.IsNullOrWhiteSpace(description))
+            query = query.Where(p => p.Description == description);
 
         return Ok(await query.OrderByDescending(p => p.PaidAt).ToListAsync());
     }

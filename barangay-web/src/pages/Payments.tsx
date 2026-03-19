@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { get, patch, post } from '../api';
-import type { Payment, PaymentSummary, Resident, Official } from '../types';
+import type { Payment, PaymentSummary, Resident, Official, QueueRequest } from '../types';
 import { PAYMENT_CATEGORIES, FEE_SCHEDULE } from '../types';
 import { useAuth } from '../auth';
 import ResidentPicker from '../components/ResidentPicker';
@@ -40,6 +40,12 @@ export default function Payments() {
   const [form, setForm]           = useState({ ...emptyForm });
   const [pickerResident, setPickerResident] = useState<Resident | null>(null);
 
+  // Queue number lookup
+  const [queueInput, setQueueInput]     = useState('');
+  const [queueLookup, setQueueLookup]   = useState<QueueRequest | null>(null);
+  const [queueError, setQueueError]     = useState('');
+  const [queueLoading, setQueueLoading] = useState(false);
+
   const load = () => {
     const qs = new URLSearchParams();
     if (dateFilter) qs.set('date', dateFilter);
@@ -65,9 +71,75 @@ export default function Payments() {
     if (fee !== undefined) f('amount', fee);
   };
 
+  const lookupQueue = async () => {
+    const num = queueInput.trim().toUpperCase();
+    if (!num) { setQueueError('Enter a queue number.'); return; }
+    if (!/^Q-\d{4}-\d{3}$/.test(num)) { setQueueError('Format must be Q-MMDD-NNN (e.g. Q-0319-001).'); return; }
+    setQueueLoading(true);
+    setQueueError('');
+    setQueueLookup(null);
+    try {
+      const q = await get<QueueRequest>(`/api/queue/lookup?q=${encodeURIComponent(num)}`);
+
+      // Validation: must be Released
+      if (q.status === 'Pending' || q.status === 'Processing') {
+        setQueueError(`Queue ${num} is still ${q.status} — document hasn't been released yet.`);
+        setQueueLoading(false);
+        return;
+      }
+      if (q.status === 'Cancelled') {
+        setQueueError(`Queue ${num} was cancelled.`);
+        setQueueLoading(false);
+        return;
+      }
+
+      // Validation: free document
+      const fee = FEE_SCHEDULE[q.documentType] ?? 50;
+      if (fee === 0) {
+        setQueueError(`${q.documentType} is free of charge — no payment needed.`);
+        setQueueLoading(false);
+        return;
+      }
+
+      // Validation: already paid today
+      try {
+        const qs = new URLSearchParams({ description: q.documentType });
+        if (q.residentId) qs.set('residentId', String(q.residentId));
+        const existing = await get<Payment[]>(`/api/payments?${qs}`);
+        const releaseDay = q.releasedAt ? new Date(q.releasedAt).toDateString() : new Date(q.requestedAt).toDateString();
+        const alreadyPaid = existing.find(p => p.status === 'Paid' && new Date(p.paidAt).toDateString() === releaseDay);
+        if (alreadyPaid) {
+          setQueueError(`Payment already collected — OR ${alreadyPaid.orNumber}.`);
+          setQueueLoading(false);
+          return;
+        }
+      } catch { /* non-blocking */ }
+
+      setQueueLookup(q);
+      const fullName = q.resident
+        ? `${q.resident.firstName} ${q.resident.middleName ? q.resident.middleName + ' ' : ''}${q.resident.lastName}`.trim()
+        : q.requesterName;
+      setForm(p => ({
+        ...p,
+        payerName: fullName,
+        residentId: q.residentId,
+        description: q.documentType,
+        category: 'Clearance Fee',
+        amount: fee,
+      }));
+      setPickerResident(q.resident ?? null);
+    } catch {
+      setQueueError(`Queue number "${num}" not found.`);
+    } finally {
+      setQueueLoading(false);
+    }
+  };
+
   const submit = async () => {
     if (!form.payerName.trim())   { alert('Enter payer name.'); return; }
     if (!form.description.trim()) { alert('Enter description.'); return; }
+    if (!form.collectedBy.trim()) { alert('Select who collected the payment.'); return; }
+    if (form.amount <= 0)         { alert('Amount must be greater than zero.'); return; }
     const created = await post<Payment>('/api/payments', form);
     setModal(false);
     setForm({ ...emptyForm, collectedBy: form.collectedBy });
@@ -96,7 +168,9 @@ export default function Payments() {
           <button className="btn-secondary" onClick={() => printDailyReport(summary, dateFilter)}>🖨 Daily Report</button>
           {can('collect_payments') && <button className="btn-primary" onClick={() => {
             setForm({ ...emptyForm, collectedBy: officials[0]?.name ?? '' });
-            setPickerResident(null); setModal(true);
+            setPickerResident(null);
+            setQueueInput(''); setQueueLookup(null); setQueueError('');
+            setModal(true);
           }}>+ Collect Payment</button>}
         </div>
       </div>
@@ -195,6 +269,32 @@ export default function Payments() {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
           <div className="modal" style={{ maxWidth: 560 }}>
             <h2>Collect Payment</h2>
+            {/* Queue number lookup */}
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#0369a1', display: 'block', marginBottom: 6 }}>
+                🎫 Lookup by Queue Number
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  placeholder="e.g. Q-0319-001"
+                  value={queueInput}
+                  onChange={e => { setQueueInput(e.target.value); setQueueError(''); setQueueLookup(null); }}
+                  onKeyDown={e => e.key === 'Enter' && lookupQueue()}
+                  style={{ flex: 1, textTransform: 'uppercase', fontFamily: 'monospace', letterSpacing: 1 }}
+                />
+                <button className="btn-primary" style={{ padding: '6px 14px', whiteSpace: 'nowrap' }}
+                  onClick={lookupQueue} disabled={queueLoading}>
+                  {queueLoading ? '…' : '🔍 Fetch'}
+                </button>
+              </div>
+              {queueError && <div style={{ color: '#dc2626', fontSize: 12, marginTop: 6 }}>⚠ {queueError}</div>}
+              {queueLookup && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#065f46', background: '#d1fae5', borderRadius: 6, padding: '6px 10px' }}>
+                  ✅ <strong>{queueLookup.queueNumber}</strong> · {queueLookup.documentType} · {queueLookup.requesterName}
+                  &nbsp;·&nbsp; Fee: <strong>{fmtPeso(FEE_SCHEDULE[queueLookup.documentType] ?? 0)}</strong>
+                </div>
+              )}
+            </div>
             <div className="form-grid">
               <div className="form-group full">
                 <label>Resident (optional — auto-fills payer name)</label>
