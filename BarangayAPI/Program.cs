@@ -372,6 +372,25 @@ using (var scope = app.Services.CreateScope())
 
     conn.Close();
 
+    // Seed default officials if none exist
+    if (!db.Officials.Any())
+    {
+        var officials = new[]
+        {
+            new Official { Name="Vivian M. Madera",    Position="Punong Barangay",   ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Gaspar P. Monisit",   Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Neil A. Arnejo",      Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Mario P. Monisit",    Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Analiza C. Coloscas", Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Jerome P. Remidio",   Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Raymundo M. Ruiz",    Position="Barangay Kagawad",  ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Jeralin B. Diocampo", Position="Barangay Secretary",ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+            new Official { Name="Pio L. Monteron",     Position="Barangay Treasurer",ContactNumber="", TermStart=new DateTime(2023,1,1), TermEnd=new DateTime(2026,12,31), IsActive=true },
+        };
+        db.Officials.AddRange(officials);
+        db.SaveChanges();
+    }
+
     // Seed default admin if no users exist
     if (!db.Users.Any())
     {
